@@ -17,17 +17,17 @@ func main() {
 		port = "8080"
 	}
 
-	logLevel := new(slog.LevelVar)
-	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-		Level: logLevel,
-	}))
-	slog.SetDefault(logger)
+	// logLevel := new(slog.LevelVar)
+	// logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+	// 	Level: logLevel,
+	// }))
+	// slog.SetDefault(logger)
 
 	serveMux := http.NewServeMux()
 	routes.AddRoutes(serveMux)
 
 	addr := net.JoinHostPort("", port)
-	logger.Info(fmt.Sprintf("Listening on %s...", addr))
+	slog.Info(fmt.Sprintf("Listening on %s...", addr))
 	if err := http.ListenAndServe(addr, serveMux); err != nil {
 		log.Fatal(err)
 	}
