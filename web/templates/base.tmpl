@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="stylesheet" href="css/pico.classless.green.min.css" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script src="js/index.js" type="module"></script>
+    <meta
+      name="description"
+      content="WASM API client with bells and whistles."
+    />
+    <title>Clientele</title>
+  </head>
+  <body>
+    <header>
+      <nav>
+        <ul>
+          <li>
+            <strong>
+              <a href="/">Making use of our clientele</a>
+            </strong>
+          </li>
+        </ul>
+        <ul>
+          <li>
+            <a href="/about">About</a>
+          </li>
+        </ul>
+      </nav>
+    </header>
+    <main>
+      {{block "content" .}}
+      <p>Content not loaded! This is an error.</p>
+      {{end}}
+    </main>
+    <footer>
+      <a href="https://github.com/ioansx/clientele">GitHub</a>
+    </footer>
+  </body>
+</html>

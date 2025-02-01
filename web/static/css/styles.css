@@ -1,0 +1,9 @@
+.base__logo {
+  all: unset;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+#man-article-page>pre {
+  padding: 1rem;
+}
