@@ -4,16 +4,42 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="light dark" />
-    <link rel="stylesheet" href="css/pico.classless.green.min.css" />
-    <link rel="stylesheet" href="css/styles.css" />
-    <script src="js/index.js" type="module"></script>
     <meta
       name="description"
       content="WASM API client with bells and whistles."
     />
+    <link rel="stylesheet" href="css/pico.classless.green.min.css" />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script src="js/index.js" type="module"></script>
+	<script src="js/wasm_exec.js"></script>
+	<script>
+		if (!WebAssembly.instantiateStreaming) { // polyfill
+			WebAssembly.instantiateStreaming = async (resp, importObject) => {
+				const source = await (await resp).arrayBuffer();
+				return await WebAssembly.instantiate(source, importObject);
+			};
+		}
+
+		const go = new Go();
+		let mod, inst;
+		WebAssembly.instantiateStreaming(fetch("clientele.wasm"), go.importObject).then((result) => {
+			mod = result.module;
+			inst = result.instance;
+			document.getElementById("runButton").disabled = false;
+		}).catch((err) => {
+			console.error(err);
+		});
+
+		async function run() {
+			console.clear();
+			await go.run(inst);
+			inst = await WebAssembly.instantiate(mod, go.importObject); // reset instance
+		}
+	</script>
     <title>Clientele</title>
   </head>
   <body>
+	<button onClick="run();" id="runButton" disabled>Run</button>
     <header>
       <nav>
         <ul>
