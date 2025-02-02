@@ -14,7 +14,7 @@ func JSONDat(w http.ResponseWriter, code int, dat any) error {
 }
 
 func JSONErr(w http.ResponseWriter, code int, errMsg string) {
-	err := JSONOutdto(w, code, models.Outdto[any]{Err: []string{errMsg}})
+	err := JSONOutdto(w, code, models.Outdto[any]{Err: errMsg})
 	if err != nil {
 		slog.Error("serialization failed", "err", err)
 	}
