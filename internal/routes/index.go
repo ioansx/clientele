@@ -15,7 +15,7 @@ func indexHandler(templates *template.Template) http.Handler {
 		err := templates.ExecuteTemplate(w, name, nil)
 		if err != nil {
 			slog.Error(err.Error(), "template", name)
-			internal.InternalServerError(w, r)
+			internal.TextInternalServerError(w, r)
 			return
 		}
 	})

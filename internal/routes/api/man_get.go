@@ -17,24 +17,24 @@ func ManGetHandler() http.Handler {
 			}
 		}
 
-		if arg == "" {
-			internal.BadRequest(w, r)
-			return
-		}
-
 		// TODO: Validate arg
-
-		output, err := services.GenerateManPage(arg)
-		if err != nil {
-			slog.Error(err.Error())
-			internal.InternalServerError(w, r)
+		if arg == "" {
+			internal.JSONErr(w, http.StatusBadRequest, "query param 'arg' is not defined")
 			return
 		}
 
-		w.Header().Add("Content-Type", "application/json")
-		if _, err := w.Write(output); err != nil {
-			slog.Error(err.Error())
-			internal.InternalServerError(w, r)
+		errMsg := "could not generate man page"
+
+		dto, err := services.GenerateManPage(arg)
+		if err != nil {
+			slog.Error(errMsg, "err", err)
+			internal.JSONErr(w, http.StatusInternalServerError, errMsg)
+			return
+		}
+
+		if err := internal.JSONDat(w, http.StatusOK, dto); err != nil {
+			slog.Error(errMsg, "err", err)
+			internal.JSONErr(w, http.StatusInternalServerError, errMsg)
 			return
 		}
 	})
