@@ -17,12 +17,6 @@ func main() {
 		port = "8080"
 	}
 
-	// logLevel := new(slog.LevelVar)
-	// logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
-	// 	Level: logLevel,
-	// }))
-	// slog.SetDefault(logger)
-
 	serveMux := http.NewServeMux()
 	routes.AddRoutes(serveMux)
 

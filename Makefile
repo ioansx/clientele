@@ -4,7 +4,7 @@ tmp_dir = ./tmp
 
 .PHONY: wasm/build
 wasm/build:
-	GOOS=js GOARCH=wasm go build -o ${tmp_dir}/clientele.wasm ./cmd/client
+	GOOS=js GOARCH=wasm tinygo build -o ${tmp_dir}/clientele.wasm ./cmd/client
 
 .PHONY: wasm/deploy
 wasm/deploy: wasm/build
