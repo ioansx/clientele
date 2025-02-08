@@ -12,37 +12,31 @@
     <link rel="stylesheet" href="css/styles.css" />
     <script src="js/index.js" type="module"></script>
     <script src="js/wasm_exec.js"></script>
-    <script>
-      if (!WebAssembly.instantiateStreaming) { // polyfill
-	WebAssembly.instantiateStreaming = async (resp, importObject) => {
-	  const source = await (await resp).arrayBuffer();
-	  return await WebAssembly.instantiate(source, importObject);
-	};
-      }
-
-      const go = new Go();
-      let mod, inst;
-      WebAssembly.instantiateStreaming(fetch("clientele.wasm"), go.importObject).then((result) => {
-	mod = result.module;
-	inst = result.instance;
-      }).catch((err) => {
-	console.error(err);
-      });
-
-      async function run() {
-	console.clear();
-	await go.run(inst);
-	inst = await WebAssembly.instantiate(mod, go.importObject); // reset instance
-      }
-
-      document.addEventListener("load", async () => {
-	await run();
-	console.log("WASM module is loaded.");
-      });
-    </script>
     <title>Clientele</title>
   </head>
   <body>
+    <script>
+      const go = new Go();
+      const WASM_URL = 'clientele.wasm';
+      var clientele;
+
+      if ('instantiateStreaming' in WebAssembly) {
+	WebAssembly.instantiateStreaming(fetch(WASM_URL), go.importObject).then(function (obj) {
+	  clientele = obj.instance;
+	  go.run(clientele);
+	})
+      } else {
+	fetch(WASM_URL).then(resp => resp.arrayBuffer()).then(bytes =>
+	  WebAssembly.instantiate(bytes, go.importObject).then(function (obj) {
+	    clientele = obj.instance;
+	    go.run(clientele);
+	  })
+	)
+      }
+
+      // TODO: Reload the runtime if it exits.
+    </script>
+
     <header>
       <nav>
         <ul>

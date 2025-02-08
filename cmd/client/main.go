@@ -3,9 +3,8 @@
 package main
 
 import (
-	"fmt"
-
-	"github.com/ioansx/clientele/internal/models"
+// "syscall/js"
+// "github.com/ioansx/clientele/internal/models"
 )
 
 func main() {
@@ -13,12 +12,12 @@ func main() {
 
 	// js.Global().Set("ManGet", js.FuncOf(ManGet))
 
-	fmt.Println("Loaded clientele.")
-
 	// <-wait
 }
 
-func ManGet() any {
-	dat := models.ManGetOutdto{Output: "hey there"}
-	return models.Outdto[models.ManGetOutdto]{Dat: dat}
+//export ManGet
+func ManGet() int {
+	// dat := models.ManGetOutdto{Output: "hey there"}
+	// return models.Outdto[models.ManGetOutdto]{Dat: dat}
+	return 5
 }
