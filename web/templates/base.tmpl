@@ -16,25 +16,28 @@
   </head>
   <body>
     <script>
-      const go = new Go();
-      const WASM_URL = 'clientele.wasm';
-      var clientele;
-
-      if ('instantiateStreaming' in WebAssembly) {
-	WebAssembly.instantiateStreaming(fetch(WASM_URL), go.importObject).then(function (obj) {
-	  clientele = obj.instance;
-	  go.run(clientele);
-	})
-      } else {
-	fetch(WASM_URL).then(resp => resp.arrayBuffer()).then(bytes =>
-	  WebAssembly.instantiate(bytes, go.importObject).then(function (obj) {
-	    clientele = obj.instance;
-	    go.run(clientele);
-	  })
-	)
+      if (!WebAssembly.instantiateStreaming) { // polyfill
+        WebAssembly.instantiateStreaming = async (resp, importObject) => {
+          const source = await (await resp).arrayBuffer();
+          return await WebAssembly.instantiate(source, importObject);
+        };
       }
 
-      // TODO: Reload the runtime if it exits.
+      const go = new Go();
+      const WASM_URL = 'clientele.wasm';
+      let mod, clientele;
+      WebAssembly.instantiateStreaming(fetch(WASM_URL), go.importObject).then((result) => {
+        mod = result.module;
+        clientele = result.instance;
+      }).catch((err) => {
+        console.error(err);
+      });
+
+      async function run() {
+        console.clear();
+        await go.run(clientele);
+        clientele = await WebAssembly.instantiate(mod, go.importObject); // reset instance
+      }
     </script>
 
     <header>
