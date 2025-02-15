@@ -10,9 +10,9 @@
     />
     <link rel="stylesheet" href="css/pico.classless.green.min.css" />
     <link rel="stylesheet" href="css/styles.css" />
+    <title>Clientele</title>
     <script src="js/index.js" type="module"></script>
     <script src="js/wasm_exec.js"></script>
-    <title>Clientele</title>
   </head>
   <body>
     <script>
@@ -26,20 +26,24 @@
       const go = new Go();
       const WASM_URL = 'clientele.wasm';
       let mod, clientele;
-      WebAssembly.instantiateStreaming(fetch(WASM_URL), go.importObject).then((result) => {
+      WebAssembly.instantiateStreaming(fetch(WASM_URL), go.importObject).then(async (result) => {
         mod = result.module;
         clientele = result.instance;
+        let retries = 0;
+        while (retries < 100) {
+          await run();
+          retries++;
+        }
       }).catch((err) => {
         console.error(err);
       });
 
       async function run() {
-        console.clear();
+        // console.clear();
         await go.run(clientele);
         clientele = await WebAssembly.instantiate(mod, go.importObject); // reset instance
       }
     </script>
-
     <header>
       <nav>
         <ul>

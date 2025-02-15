@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"syscall/js"
 	// "github.com/ioansx/clientele/internal/models"
 )
@@ -10,7 +11,9 @@ import (
 func main() {
 	wait := make(chan int, 0)
 
-	// js.Global().Set("ManGet", js.FuncOf(ManGet))
+	js.Global().Set("manGet", js.FuncOf(ManGet))
+
+	fmt.Println("Clientele is ready to be served.")
 
 	<-wait
 }
