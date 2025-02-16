@@ -11,8 +11,10 @@ import (
 	// "github.com/ioansx/clientele/internal/models"
 )
 
+var httpClient = http.Client{}
+
 func main() {
-	wait := make(chan int, 0)
+	wait := make(chan int)
 
 	js.Global().Set("manGet", js.FuncOf(ManGet))
 
@@ -30,19 +32,43 @@ func ManGet(this js.Value, args []js.Value) any {
 		return "first arg is undefined"
 	}
 
-	arg := args[0].String()
-	return get("/api/v1/man", url.Values{"arg": {arg}})
+	c := make(chan errResponse, 1)
+	go func() {
+		arg := args[0].String()
+		data, err := doRequest(http.MethodGet, "/api/v1/man", url.Values{"arg": {arg}})
+		if err != nil {
+			c <- errResponse{dat: "", err: fmt.Errorf("Client error: %w", err)}
+			return
+		}
+		c <- errResponse{dat: data, err: nil}
+	}()
+	data := <-c
+
+	return data
 }
 
-func get(path string, query url.Values) string {
-	resp, err := http.Get(fmt.Sprintf("%s?%s", path, query.Encode()))
+type errResponse struct {
+	dat string
+	err error
+}
+
+func doRequest(method string, path string, query url.Values) (string, error) {
+	url := fmt.Sprintf("%s?%s", path, query.Encode())
+	req, err := http.NewRequest(method, url, nil)
 	if err != nil {
-		fmt.Println("Error: %w", err)
-		return "error"
+		return "", fmt.Errorf("doRequest NewRequest: %w", err)
+	}
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("doRequest Do: %w", err)
 	}
 
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("doRequest read body: %w", err)
+	}
 
-	return string(body)
+	return string(body), nil
 }
