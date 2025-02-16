@@ -14,61 +14,72 @@ import (
 var httpClient = http.Client{}
 
 func main() {
-	wait := make(chan int)
-
-	js.Global().Set("manGet", js.FuncOf(ManGet))
+	js.Global().Set("manGet", ManGet())
 
 	fmt.Println("Clientele is ready to be served.")
 
-	<-wait
+	select {}
 }
 
-func ManGet(this js.Value, args []js.Value) any {
-	if len(args) != 1 {
-		return "error too few args"
-	}
+func ManGet() js.Func {
+	return js.FuncOf(func(this js.Value, args []js.Value) any {
 
-	if args[0].IsUndefined() {
-		return "first arg is undefined"
-	}
+		// validation
+		// if len(args) != 1 {
+		// 	errorObj := js.Global().Get("Error").New("error too few args")
+		// 	return js.Global().Get("Promise").Get("reject").Invoke(errorObj)
+		// }
+		//
+		// if args[0].IsUndefined() {
+		// 	errorObj := js.Global().Get("Error").New("first arg is undefined")
+		// 	return js.Global().Get("Promise").Get("reject").Invoke(errorObj)
+		// }
 
-	c := make(chan errResponse, 1)
-	go func() {
 		arg := args[0].String()
-		data, err := doRequest(http.MethodGet, "/api/v1/man", url.Values{"arg": {arg}})
-		if err != nil {
-			c <- errResponse{dat: "", err: fmt.Errorf("Client error: %w", err)}
-			return
-		}
-		c <- errResponse{dat: data, err: nil}
-	}()
-	data := <-c
 
-	return data
-}
+		handler := js.FuncOf(func(this js.Value, args []js.Value) any {
+			resolve := args[0]
+			reject := args[1]
 
-type errResponse struct {
-	dat string
-	err error
-}
+			go func() {
+				url := fmt.Sprintf("%s?%s", "/api/v1/man", url.Values{"arg": {arg}}.Encode())
+				req, err := http.NewRequest(http.MethodGet, url, nil)
+				if err != nil {
+					errorObj := js.Global().Get("Error").New(fmt.Errorf("New request: %w", err).Error())
+					reject.Invoke(errorObj)
+					return
+				}
 
-func doRequest(method string, path string, query url.Values) (string, error) {
-	url := fmt.Sprintf("%s?%s", path, query.Encode())
-	req, err := http.NewRequest(method, url, nil)
-	if err != nil {
-		return "", fmt.Errorf("doRequest NewRequest: %w", err)
-	}
+				resp, err := httpClient.Do(req)
+				if err != nil {
+					errorObj := js.Global().Get("Error").New(fmt.Errorf("Do request: %w", err).Error())
+					reject.Invoke(errorObj)
+					return
+				}
 
-	resp, err := httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("doRequest Do: %w", err)
-	}
+				defer resp.Body.Close()
+				body, err := io.ReadAll(resp.Body)
+				if err != nil {
+					errorObj := js.Global().Get("Error").New(fmt.Errorf("Read body: %w", err).Error())
+					reject.Invoke(errorObj)
+					return
+				}
 
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("doRequest read body: %w", err)
-	}
+				dataJS := js.Global().Get("Uint8Array").New(len(body))
+				js.CopyBytesToJS(dataJS, body)
 
-	return string(body), nil
+				response := js.Global().Get("Response").New(dataJS, map[string]any{
+					"status":     resp.StatusCode,
+					"statusText": resp.Status,
+					// "headers":    js.Global().Get("Headers").New(resp.Header),
+				})
+
+				resolve.Invoke(response)
+			}()
+
+			return nil
+		})
+
+		return js.Global().Get("Promise").New(handler)
+	})
 }
