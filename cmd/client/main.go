@@ -11,7 +11,10 @@ import (
 var httpClient = http.Client{}
 
 func main() {
-	js.Global().Set("manGet", js.FuncOf(manGet))
+	client := NewClient()
+	client.Handle("manGet", manGet)
+
+	js.Global().Set("clientele", client.Clientele())
 
 	fmt.Println("Clientele is ready to be served.")
 
