@@ -4,48 +4,22 @@ package main
 
 import (
 	"fmt"
-	"io"
-	"net/http"
-	"net/url"
 	"syscall/js"
 
+	"github.com/ioansx/clientele/cmd/client/clientele"
 	"github.com/ioansx/clientele/cmd/client/web"
 )
 
-func newPromiseHandler(method string, path string, query url.Values) js.Func {
+func newPromiseHandler(client *clientele.Client, req clientele.Request) js.Func {
 	callAPI := func(resolve, reject js.Value) {
-		url := path
-		if len(query) > 0 {
-			url = fmt.Sprintf("%s?%s", path, query.Encode())
-		}
-
-		req, err := http.NewRequest(method, url, nil)
+		resp, err := client.Do(req)
 		if err != nil {
-			errorObj := web.NewError(fmt.Errorf("New request: %w", err).Error())
+			errorObj := web.NewError(fmt.Errorf("Clientele: %w", err).Error())
 			reject.Invoke(errorObj)
 			return
 		}
 
-		resp, err := httpClient.Do(req)
-		if err != nil {
-			errorObj := web.NewError(fmt.Errorf("Do request: %w", err).Error())
-			reject.Invoke(errorObj)
-			return
-		}
-
-		defer resp.Body.Close()
-		body, err := io.ReadAll(resp.Body)
-		if err != nil {
-			errorObj := web.NewError(fmt.Errorf("Read body: %w", err).Error())
-			reject.Invoke(errorObj)
-			return
-		}
-
-		bodyJS := web.Uint8Array().New(len(body))
-		js.CopyBytesToJS(bodyJS, body)
-
-		response := web.Response().New(bodyJS, web.NewResponseInit(resp))
-
+		response := web.Response().New(resp.Body, web.NewResponseInit(resp))
 		resolve.Invoke(response)
 	}
 

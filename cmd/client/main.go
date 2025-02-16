@@ -4,18 +4,16 @@ package main
 
 import (
 	"fmt"
-	"net/http"
 	"syscall/js"
+
+	"github.com/ioansx/clientele/cmd/client/clientele"
 )
 
-var httpClient = http.Client{}
-
 func main() {
-	client := NewClient()
-	client.Handle("manGet", manGet)
+	clt := clientele.NewClient()
+	clt.Handle("manGet", manGet(clt))
 
-	js.Global().Set("clientele", client.Clientele())
-
+	js.Global().Set("clientele", clt.Endpoints())
 	fmt.Println("Clientele is ready to be served.")
 
 	select {}
