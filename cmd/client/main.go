@@ -9,77 +9,76 @@ import (
 	"net/url"
 	"syscall/js"
 	// "github.com/ioansx/clientele/internal/models"
+	"github.com/ioansx/clientele/cmd/client/web"
 )
 
 var httpClient = http.Client{}
 
 func main() {
-	js.Global().Set("manGet", ManGet())
+	js.Global().Set("manGet", js.FuncOf(ManGet))
 
 	fmt.Println("Clientele is ready to be served.")
 
 	select {}
 }
 
-func ManGet() js.Func {
+func ManGet(this js.Value, args []js.Value) any {
+	if len(args) != 1 || args[0].IsUndefined() {
+		errorObj := web.Error().New("'arg' is undefined.")
+		return web.PromiseReject().Invoke(errorObj)
+	}
+
+	arg := args[0].String()
+
+	path := "/api/v1/man"
+	query := url.Values{"arg": {arg}}
+
+	handler := makePromiseHandler(http.MethodGet, path, query)
+
+	return web.Promise().New(handler)
+}
+
+func makePromiseHandler(method string, path string, query url.Values) js.Func {
 	return js.FuncOf(func(this js.Value, args []js.Value) any {
+		resolve := args[0]
+		reject := args[1]
 
-		// validation
-		// if len(args) != 1 {
-		// 	errorObj := js.Global().Get("Error").New("error too few args")
-		// 	return js.Global().Get("Promise").Get("reject").Invoke(errorObj)
-		// }
-		//
-		// if args[0].IsUndefined() {
-		// 	errorObj := js.Global().Get("Error").New("first arg is undefined")
-		// 	return js.Global().Get("Promise").Get("reject").Invoke(errorObj)
-		// }
+		go func() {
+			url := path
+			if len(query) > 0 {
+				url = fmt.Sprintf("%s?%s", path, query.Encode())
+			}
 
-		arg := args[0].String()
+			req, err := http.NewRequest(method, url, nil)
+			if err != nil {
+				errorObj := web.Error().New(fmt.Errorf("New request: %w", err).Error())
+				reject.Invoke(errorObj)
+				return
+			}
 
-		handler := js.FuncOf(func(this js.Value, args []js.Value) any {
-			resolve := args[0]
-			reject := args[1]
+			resp, err := httpClient.Do(req)
+			if err != nil {
+				errorObj := web.Error().New(fmt.Errorf("Do request: %w", err).Error())
+				reject.Invoke(errorObj)
+				return
+			}
 
-			go func() {
-				url := fmt.Sprintf("%s?%s", "/api/v1/man", url.Values{"arg": {arg}}.Encode())
-				req, err := http.NewRequest(http.MethodGet, url, nil)
-				if err != nil {
-					errorObj := js.Global().Get("Error").New(fmt.Errorf("New request: %w", err).Error())
-					reject.Invoke(errorObj)
-					return
-				}
+			defer resp.Body.Close()
+			body, err := io.ReadAll(resp.Body)
+			if err != nil {
+				errorObj := web.Error().New(fmt.Errorf("Read body: %w", err).Error())
+				reject.Invoke(errorObj)
+				return
+			}
 
-				resp, err := httpClient.Do(req)
-				if err != nil {
-					errorObj := js.Global().Get("Error").New(fmt.Errorf("Do request: %w", err).Error())
-					reject.Invoke(errorObj)
-					return
-				}
+			bodyJS := web.Uint8Array().New(len(body))
+			js.CopyBytesToJS(bodyJS, body)
 
-				defer resp.Body.Close()
-				body, err := io.ReadAll(resp.Body)
-				if err != nil {
-					errorObj := js.Global().Get("Error").New(fmt.Errorf("Read body: %w", err).Error())
-					reject.Invoke(errorObj)
-					return
-				}
+			response := web.Response().New(bodyJS, web.ResponseInit(resp))
 
-				dataJS := js.Global().Get("Uint8Array").New(len(body))
-				js.CopyBytesToJS(dataJS, body)
+			resolve.Invoke(response)
+		}()
 
-				response := js.Global().Get("Response").New(dataJS, map[string]any{
-					"status":     resp.StatusCode,
-					"statusText": resp.Status,
-					// "headers":    js.Global().Get("Headers").New(resp.Header),
-				})
-
-				resolve.Invoke(response)
-			}()
-
-			return nil
-		})
-
-		return js.Global().Get("Promise").New(handler)
+		return nil
 	})
 }
