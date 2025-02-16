@@ -29,16 +29,12 @@
       WebAssembly.instantiateStreaming(fetch(WASM_URL), go.importObject).then(async (result) => {
         mod = result.module;
         clientele = result.instance;
-        let retries = 0;
-        while (retries < 100) {
-          await run();
-          retries++;
-        }
+        await runClientele();
       }).catch((err) => {
         console.error(err);
       });
 
-      async function run() {
+      async function runClientele() {
         // console.clear();
         await go.run(clientele);
         clientele = await WebAssembly.instantiate(mod, go.importObject); // reset instance
