@@ -8,7 +8,15 @@ import (
 	"syscall/js"
 )
 
-func ResponseInit(resp *http.Response) js.Value {
+func NewError(msg string) js.Value {
+	return Error().New(msg)
+}
+
+func NewPromise(handler js.Func) js.Value {
+	return Promise().New(handler)
+}
+
+func NewResponseInit(resp *http.Response) js.Value {
 	headerMap := make(map[string]any, len(resp.Header))
 	for key, value := range resp.Header {
 		headerMap[key] = strings.Join(value, ",")
