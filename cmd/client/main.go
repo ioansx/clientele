@@ -10,10 +10,10 @@ import (
 )
 
 func main() {
-	clt := clientele.NewClient()
-	clt.Handle("manGet", manGet(clt))
+	c := clientele.NewClient()
+	c.Handle("manGet", manGet(c))
 
-	js.Global().Set("clientele", clt.Endpoints())
+	js.Global().Set("clientele", c.Endpoints())
 	fmt.Println("Clientele is ready to be served.")
 
 	select {}
