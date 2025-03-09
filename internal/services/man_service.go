@@ -7,8 +7,8 @@ import (
 	"github.com/ioansx/clientele/internal/models"
 )
 
-func GenerateManPage(arg string) (*models.ManGetOutdto, error) {
-	cmd := exec.Command("man", "-P", "cat", arg)
+func GenerateManPage(page string) (*models.ManGetOutdto, error) {
+	cmd := exec.Command("man", "-P", "cat", page)
 
 	output, err := cmd.Output()
 	if err != nil {
