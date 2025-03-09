@@ -15,14 +15,16 @@ import (
 func manGet(client *clientele.Client) func(js.Value, []js.Value) any {
 	return func(this js.Value, args []js.Value) any {
 		if len(args) != 1 || args[0].IsUndefined() {
-			return web.PromiseReject(web.NewError("'page' is undefined"))
+			wrapped := clientele.WrapError("'page' is undefined")
+			return web.PromiseReject(wrapped)
 		}
 
 		page := args[0].String()
 
 		err := validations.ValidateManGet(page)
 		if err != nil {
-			return web.PromiseReject(web.NewError(err.Error()))
+			wrapped := clientele.WrapError(err.Error())
+			return web.PromiseReject(wrapped)
 		}
 
 		req := clientele.Request{

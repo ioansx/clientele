@@ -18,8 +18,8 @@ Inspect man pages for unix-like commands such as:
         const resp = await clientele.manGet($data.pageInput).then(x => x.json());
         $data.pageOutput = resp.dat.output;
       } catch (e) {
-        console.error(e);
-        alert(e.message);
+        const resp = JSON.parse(e);
+        alert(resp.err);
       }
     }
   </script>
