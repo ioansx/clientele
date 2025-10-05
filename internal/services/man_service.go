@@ -9,6 +9,7 @@ import (
 
 func GenerateManPage(page string) (*models.ManGetOutdto, error) {
 	cmd := exec.Command("man", "-P", "cat", page)
+	cmd.Env = append(cmd.Env, "MANWIDTH=80")
 
 	output, err := cmd.Output()
 	if err != nil {
